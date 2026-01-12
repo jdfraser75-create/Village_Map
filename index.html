@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Village Property Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <!-- Leaflet Draw CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
+  
+  <style>
+    body { margin: 0; }
+    #map { height: 100vh; width: 100vw; }
+    button { cursor:pointer; }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Leaflet Draw JS -->
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
+<script>
+  // ----------------------------
+  // 1. Create the map
+  // ----------------------------
+  const map = L.map('map').setView([52.20620, -2.70243], 17); // replace with your village coords
+
+  // ----------------------------
+  // 2. Base layers
+  // ----------------------------
+  const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 20,
+    attribution: '© OpenStreetMap contributors'
+  });
+
+  const esriSat = L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    { maxZoom: 20, attribution: 'Tiles © Esri' }
+  );
+
+  esriSat.addTo(map); // start with satellite
+  L.control.layers({ "Satellite": esriSat, "Map": osm }).addTo(map);
+
+  // ----------------------------
+  // 3. Feature layer for buildings
+  // ----------------------------
+  const drawnItems = new L.FeatureGroup();
+  map.addLayer(drawnItems);
+
+  // ----------------------------
+  // 4. Load saved buildings
+  // ----------------------------
+  fetch("data/buildings.geojson")
+    .then(r => r.json())
+    .then(data => {
+      const loaded = L.geoJSON(data, {
+        onEachFeature: function(feature, layer) {
+          layer.feature = feature;
+          attachPopup(layer);
+          drawnItems.addLayer(layer);
+
+          // make it non-editable
+          if(layer.editing) layer.editing.disable();
+        }
+      });
+    });
+
+  // ----------------------------
+  // 5. Draw controls
+  // ----------------------------
+  //No draw controls for public version
+
+
+  // ----------------------------
+  // 6. When a new shape is drawn
+  // ----------------------------
+  map.on(L.Draw.Event.CREATED, function(e) {
+    const layer = e.layer;
+    // attach empty properties
+    layer.feature = {
+      type: "Feature",
+      properties: { name:"", occupants:"", notes:"" }
+    };
+    attachPopup(layer);
+    drawnItems.addLayer(layer);
+    layer.openPopup();
+  });
+
+  // ----------------------------
+  // 7. Attach editable popup
+  // ----------------------------
+  function attachPopup(layer) {
+    layer.on("click", function() {
+    const p = layer.feature.properties;
+    const html = `
+      <div style="min-width:220px">
+        <b>Building name:</b> ${p.name}<br><br>
+        <b>Occupants:</b> ${p.occupants}<br><br>
+        <b>Notes:</b> ${p.notes}
+      </div>
+    `;
+    layer.bindPopup(html).openPopup();
+    });
+  }
+
+  // ----------------------------
+  // 8. Save data in memory
+  // ----------------------------
+  function saveBuilding() {
+    const layer = Object.values(drawnItems._layers)
+      .find(l => l.isPopupOpen());
+    if (!layer) return;
+
+    const p = layer.feature.properties;
+    p.name = document.getElementById("bname").value;
+    p.occupants = document.getElementById("occ").value;
+    p.notes = document.getElementById("notes").value;
+
+    alert("Saved to this building (in memory). Use 'Export' to save to file.");
+    layer.closePopup();
+  }
+
+  // ----------------------------
+  // 9. Export to GeoJSON
+  // ----------------------------
+  function exportData() {
+    const data = drawnItems.toGeoJSON();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "buildings.geojson";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const exportControl = L.control({position:"topright"});
+  exportControl.onAdd = function() {
+    const div = L.DomUtil.create("div");
+    div.innerHTML = `<button style="padding:6px">⬇ Export buildings</button>`;
+    div.onclick = exportData;
+    return div;
+  };
+  //exportControl.addTo(map); //not for public
+
+</script>
+</body>
+</html>

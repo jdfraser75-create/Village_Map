@@ -1,0 +1,83 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Dingle",
+        "occupants": "Joe and Vicky",
+        "notes": ""
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -2.702054,
+              52.2064
+            ],
+            [
+              -2.702167,
+              52.206341
+            ],
+            [
+              -2.702076,
+              52.20626
+            ],
+            [
+              -2.701974,
+              52.20629
+            ],
+            [
+              -2.702033,
+              52.206325
+            ],
+            [
+              -2.702,
+              52.206346
+            ],
+            [
+              -2.702054,
+              52.2064
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Woodwinds",
+        "occupants": "Vernon",
+        "notes": ""
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -2.702228,
+              52.206795
+            ],
+            [
+              -2.702346,
+              52.206713
+            ],
+            [
+              -2.702239,
+              52.206653
+            ],
+            [
+              -2.702072,
+              52.206713
+            ],
+            [
+              -2.702228,
+              52.206795
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
